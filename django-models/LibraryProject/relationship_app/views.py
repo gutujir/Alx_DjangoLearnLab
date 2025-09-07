@@ -1,9 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.generic import DetailView
-from .models import Book, Library
+from .models import Book, Library, Author
 
 
 # Function-based view: Render book list
@@ -12,7 +12,48 @@ def list_books(request):
     return render(request, "relationship_app/list_books.html", {"books": books})
 
 
+# Add book view
+@permission_required('relationship_app.can_add_book')
+def add_book(request):
+    if request.method == "POST":
+        title = request.POST.get("title")
+        author_id = request.POST.get("author")
+        if title and author_id:
+            author = get_object_or_404(Author, id=author_id)
+            Book.objects.create(title=title, author=author)
+            return redirect("list_books")
+    authors = Author.objects.all()
+    return render(request, "relationship_app/add_book.html", {"authors": authors})
+
+
+# Edit book view
+@permission_required('relationship_app.can_change_book')
+def edit_book(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+    if request.method == "POST":
+        title = request.POST.get("title")
+        author_id = request.POST.get("author")
+        if title and author_id:
+            book.title = title
+            book.author = get_object_or_404(Author, id=author_id)
+            book.save()
+            return redirect("list_books")
+    authors = Author.objects.all()
+    return render(request, "relationship_app/edit_book.html", {"book": book, "authors": authors})
+
+
+# Delete book view
+@permission_required('relationship_app.can_delete_book')
+def delete_book(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+    if request.method == "POST":
+        book.delete()
+        return redirect("list_books")
+    return render(request, "relationship_app/delete_book.html", {"book": book})
+
 # Class-based view: Library details
+
+
 class LibraryDetailView(DetailView):
     model = Library
     template_name = "relationship_app/library_detail.html"
