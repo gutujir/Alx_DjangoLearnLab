@@ -8,6 +8,12 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 
 
+class LibraryDetailView(DetailView):
+    model = Library
+    template_name = "relationship_app/library_detail.html"
+    context_object_name = "library"
+
+
 # Function-based view: Render book list
 def list_books(request):
     books = Book.objects.all()
@@ -54,12 +60,6 @@ def delete_book(request, book_id):
     return render(request, "relationship_app/delete_book.html", {"book": book})
 
 # Class-based view: Library details
-
-
-class LibraryDetailView(DetailView):
-    model = Library
-    template_name = "relationship_app/library_detail.html"
-    context_object_name = "library"
 
 
 # User registration
